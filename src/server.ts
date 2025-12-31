@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { buildLeaderboard, validateScore } from "./lib/scoring";
 import type {
 	GameType,
 	LeaderboardEntry,
@@ -11,25 +12,14 @@ const db = new Database("./data/scores.db", { create: true });
 
 const lastScoreTime = new Map<string, number>();
 
-function validateScore(score: Score): string | null {
-	if (score.game === "reaction") {
-		if (score.score < 50) return "Reaction time too fast";
-		if (score.score > 5000) return "Reaction time too slow";
-	}
-	if (score.game === "typing") {
-		if (score.score < 0) return "Invalid typing score";
-		if (score.score > 300) return "WPM too high";
-	}
-	if (score.game === "pattern") {
-		if (score.score < 0) return "Invalid pattern score";
-		if (score.score > 200) return "Pattern score too high";
-	}
+function validateScoreWithRateLimit(score: Score): string | null {
+	const error = validateScore(score);
+	if (error) return error;
 
 	const lastTime = lastScoreTime.get(`${score.playerId}:${score.game}`);
 	if (lastTime && Date.now() - lastTime < 5000) {
 		return "Rate limited - wait 5s between scores";
 	}
-
 	return null;
 }
 
@@ -85,48 +75,7 @@ function saveScoreDB(score: Score): void {
 }
 
 function getLeaderboardDB(filterGame?: GameType): LeaderboardEntry[] {
-	const rows = getScoresStmt.all();
-	const playerMap = new Map<string, LeaderboardEntry>();
-
-	for (const row of rows) {
-		if (filterGame && row.game !== filterGame) continue;
-
-		let entry = playerMap.get(row.player_id);
-		if (!entry) {
-			entry = {
-				playerId: row.player_id,
-				playerName: row.player_name,
-				totalScore: 0,
-				games: [],
-			};
-			playerMap.set(row.player_id, entry);
-		}
-
-		const game = row.game as GameType;
-		const existing = entry.games.find((g) => g.game === game);
-		if (existing) {
-			if (game === "reaction") {
-				if (row.score < existing.score) existing.score = row.score;
-			} else {
-				if (row.score > existing.score) existing.score = row.score;
-			}
-		} else {
-			entry.games.push({ game, score: row.score });
-		}
-	}
-
-	for (const entry of playerMap.values()) {
-		entry.totalScore = entry.games.reduce((sum, g) => {
-			const weight = g.game === "reaction" ? 2 : g.game === "typing" ? 3 : 2.5;
-			const normalized =
-				g.game === "reaction" ? Math.max(0, 500 - g.score) : g.score;
-			return sum + normalized * weight;
-		}, 0);
-	}
-
-	return Array.from(playerMap.values())
-		.sort((a, b) => b.totalScore - a.totalScore)
-		.slice(0, 20);
+	return buildLeaderboard(getScoresStmt.all(), filterGame);
 }
 
 function getRecentScores(): Score[] {
@@ -164,7 +113,7 @@ const server = Bun.serve({
 		if (url.pathname === "/scores") {
 			if (req.method === "POST") {
 				const score = (await req.json()) as Score;
-				const error = validateScore(score);
+				const error = validateScoreWithRateLimit(score);
 				if (error) {
 					return Response.json({ ok: false, error }, { status: 400 });
 				}
@@ -220,7 +169,7 @@ const server = Bun.serve({
 			const msg = JSON.parse(String(message)) as WSMessage;
 
 			if (msg.type === "score") {
-				const error = validateScore(msg.score);
+				const error = validateScoreWithRateLimit(msg.score);
 				if (error) return;
 				recordScoreTime(msg.score);
 				saveScoreDB(msg.score);
