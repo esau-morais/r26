@@ -1,6 +1,6 @@
 {
 	"name": "r26",
-	"version": "0.1.2",
+	"version": "0.1.4",
 	"description": "Race to 2026 - New Year's terminal competition",
 	"type": "module",
 	"bin": {
