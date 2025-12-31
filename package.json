@@ -1,20 +1,33 @@
 {
-  "name": "r26",
-  "module": "src/index.tsx",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "bun run --watch src/index.tsx"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@opentui/core": "^0.1.66",
-    "@opentui/react": "^0.1.66",
-    "react": "^19.2.3"
-  }
+	"name": "r26",
+	"version": "0.1.0",
+	"description": "Race to 2026 - New Year's terminal competition",
+	"type": "module",
+	"bin": {
+		"r26": "./src/index.tsx"
+	},
+	"files": ["src", "data/.gitkeep"],
+	"scripts": {
+		"dev": "bun run --watch src/index.tsx",
+		"server": "bun run --watch src/server.ts",
+		"typecheck": "bun tsc --noEmit"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/esau-morais/r26.git"
+	},
+	"keywords": ["tui", "game", "new-year", "2026", "terminal", "multiplayer"],
+	"author": "Esau Morais <esaumorais7@gmail.com> (https://emots.dev)",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@opentui/core": "^0.1.66",
+		"@opentui/react": "^0.1.66",
+		"react": "^19.2.3"
+	}
 }
