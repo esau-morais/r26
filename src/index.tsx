@@ -11,13 +11,13 @@ import { PatternMatch } from "./games/PatternMatch";
 import { ReactionRush } from "./games/ReactionRush";
 import { TypeRacer } from "./games/TypeRacer";
 import { isMidnight } from "./lib/countdown";
-import { getPlayer } from "./lib/store";
+import { getPlayer, setPlayerName } from "./lib/store";
 import { useMultiplayer } from "./lib/ws";
 import type { GameType, Player, Score, Screen } from "./types";
 
 type ExtScreen = Screen | "lobby";
 
-function App() {
+function App({ onQuit }: { onQuit: () => void }) {
 	const [player, setPlayer] = useState<Player | null>(null);
 	const [screen, setScreen] = useState<ExtScreen>("menu");
 	const [currentGame, setCurrentGame] = useState<GameType | null>(null);
@@ -161,6 +161,11 @@ function App() {
 		);
 	}
 
+	const handleNameChange = async (name: string) => {
+		const updated = await setPlayerName(name);
+		setPlayer(updated);
+	};
+
 	return (
 		<MainMenu
 			player={player}
@@ -169,9 +174,17 @@ function App() {
 			onShowStats={() => setScreen("stats")}
 			onMidnight={handleMidnight}
 			onMultiplayer={handleMultiplayer}
+			onNameChange={handleNameChange}
+			onQuit={onQuit}
 		/>
 	);
 }
 
 const renderer = await createCliRenderer();
-createRoot(renderer).render(<App />);
+const root = createRoot(renderer);
+
+function render() {
+	root.render(<App onQuit={() => renderer.destroy()} />);
+}
+
+render();

@@ -124,6 +124,7 @@ export function PatternMatch({ player, onComplete, onExit, onScore }: Props) {
 			player,
 			generatePattern,
 			startLevel,
+			onScore,
 		],
 	);
 

@@ -1,5 +1,6 @@
-import { useKeyboard, useRenderer } from "@opentui/react";
-import { useEffect, useState } from "react";
+import type { InputRenderable } from "@opentui/core";
+import { useKeyboard } from "@opentui/react";
+import { useEffect, useRef, useState } from "react";
 import {
 	formatCountdown,
 	getTimeUntilMidnight,
@@ -15,7 +16,11 @@ type Props = {
 	onShowStats: () => void;
 	onMidnight: () => void;
 	onMultiplayer: () => void;
+	onNameChange: (name: string) => void;
+	onQuit: () => void;
 };
+
+const COMMANDS = ["name", "quit"] as const;
 
 export function MainMenu({
 	player,
@@ -24,20 +29,30 @@ export function MainMenu({
 	onShowStats,
 	onMidnight,
 	onMultiplayer,
+	onNameChange,
+	onQuit,
 }: Props) {
-	const renderer = useRenderer();
-
 	const [countdown, setCountdown] = useState(
 		formatCountdown(getTimeUntilMidnight()),
 	);
 	const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
 	const [selectedGame, setSelectedGame] = useState(0);
+	const [cmdMode, setCmdMode] = useState(false);
+	const [cmdInput, setCmdInput] = useState("");
+	const inputRef = useRef<InputRenderable>(null);
 
 	const games: { key: GameType; name: string; icon: string }[] = [
 		{ key: "reaction", name: "Reaction Rush", icon: "⚡" },
 		{ key: "typing", name: "Type Racer", icon: "⌨️" },
 		{ key: "pattern", name: "Pattern Match", icon: "🎯" },
 	];
+
+	const cmdParts = cmdInput.split(" ");
+	const cmdBase = cmdParts[0] ?? "";
+	const hasArgs = cmdParts.length > 1;
+	const autocomplete = !hasArgs
+		? COMMANDS.find((c) => c.startsWith(cmdBase) && c !== cmdBase)
+		: undefined;
 
 	useEffect(() => {
 		const interval = setInterval(() => {
@@ -56,6 +71,24 @@ export function MainMenu({
 	}, []);
 
 	useKeyboard((key) => {
+		if (cmdMode) {
+			if (key.name === "escape") {
+				setCmdMode(false);
+				setCmdInput("");
+			}
+			if (key.name === "tab" && autocomplete && inputRef.current) {
+				const newValue = `${autocomplete} `;
+				inputRef.current.value = newValue;
+				inputRef.current.cursorPosition = newValue.length;
+				setCmdInput(newValue);
+			}
+			return;
+		}
+		if (key.sequence === ":") {
+			setCmdMode(true);
+			setCmdInput("");
+			return;
+		}
 		if (key.name === "j" || key.name === "down") {
 			setSelectedGame((s) => Math.min(s + 1, games.length - 1));
 		}
@@ -76,9 +109,22 @@ export function MainMenu({
 			onShowStats();
 		}
 		if (key.name === "q") {
-			renderer.destroy();
+			onQuit();
 		}
 	});
+
+	const handleCmdSubmit = (input: string) => {
+		const [cmd, ...args] = input.trim().split(" ");
+		if (cmd === "name") {
+			const name = args.join(" ").trim().slice(0, 16);
+			if (name.length >= 2) onNameChange(name);
+		}
+		if (cmd === "quit") {
+			onQuit();
+		}
+		setCmdMode(false);
+		setCmdInput("");
+	};
 
 	return (
 		<box flexDirection="column" flexGrow={1}>
@@ -151,12 +197,28 @@ export function MainMenu({
 				</box>
 			</box>
 
-			<box border borderColor="#333" padding={1} flexShrink={0}>
-				<text fg="#666">
-					[j/k] Navigate [ENTER] Play [m] Multiplayer [l] Leaderboard [s] Stats
-					[q] Quit
-				</text>
-			</box>
+			{cmdMode ? (
+				<box border borderColor="#ffd700" flexShrink={0} height={3}>
+					<input
+						ref={inputRef}
+						value={cmdInput}
+						focused
+						placeholder={`name <newname> | quit${autocomplete ? ` → ${autocomplete} [tab]` : ""} [esc]`}
+						placeholderColor="#555"
+						textColor="#fff"
+						focusedTextColor="#fff"
+						onInput={setCmdInput}
+						onSubmit={handleCmdSubmit}
+					/>
+				</box>
+			) : (
+				<box border borderColor="#333" flexShrink={0} height={3}>
+					<text fg="#666">
+						[j/k] Navigate [ENTER] Play [:] Command [m] Multiplayer [l]
+						Leaderboard [s] Stats [q] Quit
+					</text>
+				</box>
+			)}
 		</box>
 	);
 }
