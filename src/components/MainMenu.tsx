@@ -76,6 +76,24 @@ export function MainMenu({
 				setCmdMode(false);
 				setCmdInput("");
 			}
+
+			if (key.name === "backspace" && key.meta && inputRef.current) {
+				const val = inputRef.current.value;
+				const pos = inputRef.current.cursorPosition;
+
+				let start = pos;
+				// Skip trailing spaces
+				while (start > 0 && /\s/.test(val[start - 1] ?? "")) start--;
+				// Skip word characters
+				while (start > 0 && !/\s/.test(val[start - 1] ?? "")) start--;
+
+				const newValue = val.slice(0, start) + val.slice(pos);
+				inputRef.current.value = newValue;
+				inputRef.current.cursorPosition = start;
+				setCmdInput(newValue);
+				return;
+			}
+
 			if (key.name === "tab" && autocomplete && inputRef.current) {
 				const newValue = `${autocomplete} `;
 				inputRef.current.value = newValue;
