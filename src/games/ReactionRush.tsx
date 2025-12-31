@@ -59,13 +59,6 @@ export function ReactionRush({ player, onComplete, onExit, onScore }: Props) {
 	}, [state, startTime, timeoutId]);
 
 	const nextRound = async () => {
-		if (state === "early") {
-			setRound((r) => r + 1);
-			setState("waiting");
-			setTimeout(startRound, 500);
-			return;
-		}
-
 		if (round >= TOTAL_ROUNDS) {
 			const allTimes = state === "done" ? [...times, currentTime] : times;
 			const validTimes = allTimes.filter((t) => t > 0);
@@ -93,6 +86,11 @@ export function ReactionRush({ player, onComplete, onExit, onScore }: Props) {
 		setTimeout(startRound, 500);
 	};
 
+	const retryRound = () => {
+		setState("waiting");
+		setTimeout(startRound, 500);
+	};
+
 	useKeyboard((key) => {
 		if (key.name === "escape") {
 			if (timeoutId) clearTimeout(timeoutId);
@@ -102,8 +100,10 @@ export function ReactionRush({ player, onComplete, onExit, onScore }: Props) {
 		if (key.name === "space") {
 			if (state === "ready" || state === "go") {
 				handlePress();
-			} else if (state === "done" || state === "early") {
+			} else if (state === "done") {
 				nextRound();
+			} else if (state === "early") {
+				retryRound();
 			}
 		}
 	});
