@@ -48,10 +48,11 @@ export function PatternMatch({ player, onComplete, onExit, onScore }: Props) {
 		setPhase("showing");
 	}, [level, generatePattern]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(startLevel): if level changes, it'll cause to rerender
 	useEffect(() => {
 		const timer = setTimeout(startLevel, 1500);
 		return () => clearTimeout(timer);
-	}, [startLevel]);
+	}, []);
 
 	useEffect(() => {
 		if (phase !== "showing") return;
