@@ -1,11 +1,7 @@
 import type { InputRenderable } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { useEffect, useRef, useState } from "react";
-import {
-	formatCountdown,
-	getTimeUntilMidnight,
-	isMidnight,
-} from "../lib/countdown";
+import { formatCountdown, getTimeUntilMidnight } from "../lib/countdown";
 import { fetchLeaderboard } from "../lib/ws";
 import type { GameType, LeaderboardEntry, Player } from "../types";
 
@@ -14,7 +10,6 @@ type Props = {
 	onStartGame: (game: GameType) => void;
 	onShowLeaderboard: () => void;
 	onShowStats: () => void;
-	onMidnight: () => void;
 	onMultiplayer: () => void;
 	onNameChange: (name: string) => void;
 	onQuit: () => void;
@@ -27,7 +22,6 @@ export function MainMenu({
 	onStartGame,
 	onShowLeaderboard,
 	onShowStats,
-	onMidnight,
 	onMultiplayer,
 	onNameChange,
 	onQuit,
@@ -56,15 +50,10 @@ export function MainMenu({
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			if (isMidnight()) {
-				onMidnight();
-				clearInterval(interval);
-				return;
-			}
 			setCountdown(formatCountdown(getTimeUntilMidnight()));
 		}, 1000);
 		return () => clearInterval(interval);
-	}, [onMidnight]);
+	}, []);
 
 	useEffect(() => {
 		fetchLeaderboard().then((data) => setTopPlayers(data.slice(0, 5)));

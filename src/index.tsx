@@ -92,11 +92,6 @@ function App({ onQuit }: { onQuit: () => void }) {
 		setScreen("menu");
 	};
 
-	const handleMidnight = () => {
-		setScreen("fireworks");
-		setFireworksShown(true);
-	};
-
 	const handleFireworksComplete = () => {
 		setScreen("menu");
 	};
@@ -172,7 +167,6 @@ function App({ onQuit }: { onQuit: () => void }) {
 			onStartGame={handleStartGame}
 			onShowLeaderboard={() => setScreen("leaderboard")}
 			onShowStats={() => setScreen("stats")}
-			onMidnight={handleMidnight}
 			onMultiplayer={handleMultiplayer}
 			onNameChange={handleNameChange}
 			onQuit={onQuit}
