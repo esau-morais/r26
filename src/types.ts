@@ -3,6 +3,7 @@ export type GameType = "reaction" | "typing" | "pattern";
 export type Player = {
 	id: string;
 	name: string;
+	fireworksSeen?: boolean;
 };
 
 export type Score = {

@@ -20,7 +20,14 @@ export async function getPlayer(): Promise<Player> {
 
 export async function setPlayerName(name: string): Promise<Player> {
 	const player = await getPlayer();
-	player.name = name;
-	await Bun.write(PLAYER_FILE, JSON.stringify(player, null, 2));
-	return player;
+	const updated = { ...player, name };
+	await Bun.write(PLAYER_FILE, JSON.stringify(updated, null, 2));
+	return updated;
+}
+
+export async function markFireworksSeen(): Promise<Player> {
+	const player = await getPlayer();
+	const updated = { ...player, fireworksSeen: true };
+	await Bun.write(PLAYER_FILE, JSON.stringify(updated, null, 2));
+	return updated;
 }
