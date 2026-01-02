@@ -11,7 +11,7 @@ import { PatternMatch } from "./games/PatternMatch";
 import { ReactionRush } from "./games/ReactionRush";
 import { TypeRacer } from "./games/TypeRacer";
 import { isMidnight } from "./lib/countdown";
-import { getPlayer, setPlayerName } from "./lib/store";
+import { getPlayer, markFireworksSeen, setPlayerName } from "./lib/store";
 import { useMultiplayer } from "./lib/ws";
 import type { GameType, Player, Score, Screen } from "./types";
 
@@ -23,7 +23,6 @@ function App({ onQuit }: { onQuit: () => void }) {
 	const [currentGame, setCurrentGame] = useState<GameType | null>(null);
 	const [_lastScore, setLastScore] = useState<number | null>(null);
 	const [isMultiplayer, setIsMultiplayer] = useState(false);
-	const [fireworksShown, setFireworksShown] = useState(false);
 
 	const mp = useMultiplayer(isMultiplayer ? player : null);
 
@@ -32,15 +31,14 @@ function App({ onQuit }: { onQuit: () => void }) {
 	}, []);
 
 	useEffect(() => {
-		if (fireworksShown) return;
+		if (!player || player.fireworksSeen) return;
 		const check = setInterval(() => {
 			if (isMidnight() && screen === "menu") {
 				setScreen("fireworks");
-				setFireworksShown(true);
 			}
 		}, 1000);
 		return () => clearInterval(check);
-	}, [screen, fireworksShown]);
+	}, [screen, player]);
 
 	const handleScore = useCallback(
 		(score: number) => {
@@ -92,7 +90,9 @@ function App({ onQuit }: { onQuit: () => void }) {
 		setScreen("menu");
 	};
 
-	const handleFireworksComplete = () => {
+	const handleFireworksComplete = async () => {
+		const updated = await markFireworksSeen();
+		setPlayer(updated);
 		setScreen("menu");
 	};
 

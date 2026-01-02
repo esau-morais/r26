@@ -108,7 +108,8 @@ export function Fireworks({ onComplete }: Props) {
 		if (
 			key.name === "escape" ||
 			key.name === "return" ||
-			key.name === "space"
+			key.name === "space" ||
+			(key.ctrl && key.name === "c")
 		) {
 			onComplete();
 		}
